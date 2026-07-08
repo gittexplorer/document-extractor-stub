@@ -61,15 +61,13 @@ public class DocumentServiceImpl implements DocumentService {
         String requestId = UUID.randomUUID().toString();
         validation.validate(files);
 
-        long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
-        for (MultipartFile file : files) {
-            validateSupportedType(file);
-        }
+        List<UploadContext> uploads = Arrays.stream(files).map(this::prepareUpload).toList();
+        long totalUploadSize = uploads.stream().mapToLong(UploadContext::fileSize).sum();
 
-        log.info("requestId={} documents={} totalUploadSize={}", requestId, files.length, totalUploadSize);
+        log.info("requestId={} documents={} totalUploadSize={}", requestId, uploads.size(), totalUploadSize);
 
-        List<DocumentExtractionResponse.DocumentResult> documents = Arrays.stream(files)
-                .map(file -> CompletableFuture.supplyAsync(() -> process(requestId, file), executor))
+        List<DocumentExtractionResponse.DocumentResult> documents = uploads.stream()
+                .map(upload -> CompletableFuture.supplyAsync(() -> process(requestId, upload), executor))
                 .map(CompletableFuture::join)
                 .toList();
 
@@ -88,38 +86,37 @@ public class DocumentServiceImpl implements DocumentService {
         return new DocumentExtractionResponse(requestId, Instant.now(), summary, documents);
     }
 
-    private void validateSupportedType(MultipartFile file) {
-        try {
-            String fileName = names.safeName(file.getOriginalFilename());
-            validation.validateSupported(fileName, extractor.detectMimeType(file.getBytes(), fileName));
-        } catch (IOException ex) {
-            throw new InvalidUploadException("Unable to read uploaded file: " + file.getOriginalFilename());
-        }
-    }
-
-    private DocumentExtractionResponse.DocumentResult process(String requestId, MultipartFile file) {
-        long started = System.nanoTime();
+    private UploadContext prepareUpload(MultipartFile file) {
         String fileName = names.safeName(file.getOriginalFilename());
         try {
             byte[] bytes = file.getBytes();
             String mimeType = extractor.detectMimeType(bytes, fileName);
             validation.validateSupported(fileName, mimeType);
-            String text = textNormalizationUtility.normalize(extractor.extract(bytes, fileName));
+            return new UploadContext(fileName, names.extensionOf(fileName), file.getSize(), bytes, mimeType);
+        } catch (IOException ex) {
+            throw new InvalidUploadException("Unable to read uploaded file: " + file.getOriginalFilename());
+        }
+    }
+
+    private DocumentExtractionResponse.DocumentResult process(String requestId, UploadContext upload) {
+        long started = System.nanoTime();
+        try {
+            String text = textNormalizationUtility.normalize(extractor.extract(upload.content(), upload.fileName()));
             long processingTimeMs = (System.nanoTime() - started) / 1_000_000;
 
             log.info(
                     "requestId={} file={} size={} durationMs={} status=SUCCESS",
                     requestId,
-                    fileName,
-                    file.getSize(),
+                    upload.fileName(),
+                    upload.fileSize(),
                     processingTimeMs);
 
             return new DocumentExtractionResponse.DocumentResult(
-                    fileName,
-                    mimeType,
-                    names.extensionOf(fileName),
-                    file.getSize(),
-                    hash.sha256(bytes),
+                    upload.fileName(),
+                    upload.mimeType(),
+                    upload.fileExtension(),
+                    upload.fileSize(),
+                    hash.sha256(upload.content()),
                     Instant.now(),
                     text.length(),
                     processingTimeMs,
@@ -133,16 +130,16 @@ public class DocumentServiceImpl implements DocumentService {
             log.warn(
                     "requestId={} file={} size={} durationMs={} status=FAILED reason={}",
                     requestId,
-                    fileName,
-                    file.getSize(),
+                    upload.fileName(),
+                    upload.fileSize(),
                     processingTimeMs,
                     ex.getMessage());
 
             return new DocumentExtractionResponse.DocumentResult(
-                    fileName,
-                    null,
-                    names.extensionOf(fileName),
-                    file.getSize(),
+                    upload.fileName(),
+                    upload.mimeType(),
+                    upload.fileExtension(),
+                    upload.fileSize(),
                     null,
                     Instant.now(),
                     0,
@@ -152,5 +149,8 @@ public class DocumentServiceImpl implements DocumentService {
                     Map.of(),
                     message);
         }
+    }
+
+    private record UploadContext(String fileName, String fileExtension, long fileSize, byte[] content, String mimeType) {
     }
 }

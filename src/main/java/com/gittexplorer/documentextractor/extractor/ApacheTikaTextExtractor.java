@@ -1,5 +1,6 @@
 package com.gittexplorer.documentextractor.extractor;
 
+import com.gittexplorer.documentextractor.configuration.DocumentExtractionProperties;
 import com.gittexplorer.documentextractor.exception.DocumentExtractionException;
 import java.io.ByteArrayInputStream;
 import org.apache.tika.Tika;
@@ -14,18 +15,27 @@ public class ApacheTikaTextExtractor implements TextExtractionService {
     private final Tika tika;
     private final AutoDetectParser parser;
     private final ImageTextExtractionService imageTextExtractionService;
+    private final DocumentExtractionProperties properties;
 
-    public ApacheTikaTextExtractor(ImageTextExtractionService imageTextExtractionService) {
+    public ApacheTikaTextExtractor(
+            ImageTextExtractionService imageTextExtractionService,
+            DocumentExtractionProperties properties) {
         this.tika = new Tika();
         this.parser = new AutoDetectParser();
         this.imageTextExtractionService = imageTextExtractionService;
+        this.properties = properties;
     }
 
     @Override
     public String extract(byte[] content, String fileName) {
         String mimeType = detectMimeType(content, fileName);
+        boolean ocrSupported = imageTextExtractionService.supports(fileName, mimeType);
+        if (ocrSupported && !properties.getOcr().isExtractImageMetadataWithTika()) {
+            return imageTextExtractionService.extractText(content, fileName, mimeType);
+        }
+
         String tikaText = extractWithTika(content, fileName);
-        if (!imageTextExtractionService.supports(fileName, mimeType)) {
+        if (!ocrSupported) {
             return tikaText;
         }
 

@@ -28,6 +28,7 @@ document-extraction:
     tesseract-path: tesseract
     language: eng
     page-segmentation-mode: 6
+    extract-image-metadata-with-tika: false
     timeout: 30s
     additional-arguments: []
   supported-mime-types:

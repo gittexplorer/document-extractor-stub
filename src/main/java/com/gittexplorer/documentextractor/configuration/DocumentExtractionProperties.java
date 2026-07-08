@@ -149,6 +149,7 @@ public class DocumentExtractionProperties {
         private String tesseractPath = "tesseract";
         private String language = "eng";
         private int pageSegmentationMode = 6;
+        private boolean extractImageMetadataWithTika = false;
         private Duration timeout = Duration.ofSeconds(30);
         private List<String> additionalArguments = new ArrayList<>();
 
@@ -182,6 +183,14 @@ public class DocumentExtractionProperties {
 
         public void setPageSegmentationMode(int pageSegmentationMode) {
             this.pageSegmentationMode = pageSegmentationMode;
+        }
+
+        public boolean isExtractImageMetadataWithTika() {
+            return extractImageMetadataWithTika;
+        }
+
+        public void setExtractImageMetadataWithTika(boolean extractImageMetadataWithTika) {
+            this.extractImageMetadataWithTika = extractImageMetadataWithTika;
         }
 
         public Duration getTimeout() {

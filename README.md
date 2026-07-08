@@ -11,6 +11,7 @@ A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata fr
 - SHA-256, MIME type, extension, size, timestamp, duration, character count, status and failure details per document.
 - Identifier matching from `application.yml`; compiled once and reused.
 - Configurable text normalization removes noisy OCR/Tika whitespace before the response is built.
+- Upload bytes and MIME detection are reused during processing to avoid duplicate file reads.
 - Concurrent processing via a configurable `ThreadPoolTaskExecutor`.
 - Central JSON error handling and Swagger UI.
 
@@ -109,6 +110,7 @@ document-extraction:
     tesseract-path: tesseract
     language: eng
     page-segmentation-mode: 6
+    extract-image-metadata-with-tika: false
     timeout: 30s
 ```
 
@@ -126,6 +128,12 @@ Regex definitions are validated and compiled during configuration binding; inval
 ## Supported formats
 
 PDF, DOC, DOCX, TXT, RTF, HTML, XML, CSV, XLS, XLSX, ODT, JPG, JPEG, TIFF, BMP, SVG, PNG, GIF and AVIF. Raster image formats are passed to local Tesseract OCR after MIME/type validation.
+
+## Performance tuning
+
+The service reads each upload once, detects MIME type once, then reuses that context for validation, extraction, hashing and response metadata. Raster image OCR skips Apache Tika image metadata parsing by default because OCR is usually the expensive and useful step for image text extraction. If image metadata text is required, set `document-extraction.ocr.extract-image-metadata-with-tika=true`.
+
+OCR speed depends heavily on image size, image quality, language packs and Tesseract page segmentation mode. For faster image processing, use the smallest acceptable upload resolution, configure only the languages needed, and tune `document-extraction.executor` so concurrency matches the CPU capacity of the host.
 
 ## Error handling
 
