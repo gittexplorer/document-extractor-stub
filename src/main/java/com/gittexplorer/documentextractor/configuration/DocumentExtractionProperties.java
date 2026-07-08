@@ -17,6 +17,7 @@ public class DocumentExtractionProperties {
     private Set<String> supportedMimeTypes = new LinkedHashSet<>();
     private Executor executor = new Executor();
     private Ocr ocr = new Ocr();
+    private TextNormalization textNormalization = new TextNormalization();
 
     public DataSize getMaxFileSize() {
         return maxFileSize;
@@ -66,6 +67,14 @@ public class DocumentExtractionProperties {
         this.ocr = ocr;
     }
 
+    public TextNormalization getTextNormalization() {
+        return textNormalization;
+    }
+
+    public void setTextNormalization(TextNormalization textNormalization) {
+        this.textNormalization = textNormalization;
+    }
+
     public static class Executor {
         private int corePoolSize = 4;
         private int maxPoolSize = 8;
@@ -102,6 +111,36 @@ public class DocumentExtractionProperties {
 
         public void setThreadNamePrefix(String threadNamePrefix) {
             this.threadNamePrefix = threadNamePrefix;
+        }
+    }
+
+    public static class TextNormalization {
+        private boolean enabled = true;
+        private boolean collapseWhitespace = true;
+        private int maxConsecutiveLineBreaks = 1;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isCollapseWhitespace() {
+            return collapseWhitespace;
+        }
+
+        public void setCollapseWhitespace(boolean collapseWhitespace) {
+            this.collapseWhitespace = collapseWhitespace;
+        }
+
+        public int getMaxConsecutiveLineBreaks() {
+            return maxConsecutiveLineBreaks;
+        }
+
+        public void setMaxConsecutiveLineBreaks(int maxConsecutiveLineBreaks) {
+            this.maxConsecutiveLineBreaks = maxConsecutiveLineBreaks;
         }
     }
 

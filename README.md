@@ -1,6 +1,6 @@
 # Document Extractor Stub
 
-A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata from local document uploads with Apache Tika, then applies configurable identifier regular expressions.
+A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata from local document uploads with Apache Tika, performs local OCR for raster image text extraction through Tesseract, then applies configurable identifier regular expressions.
 
 ## Features
 
@@ -10,6 +10,7 @@ A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata fr
 - SVG text extraction through Apache Tika/XML parsing.
 - SHA-256, MIME type, extension, size, timestamp, duration, character count, status and failure details per document.
 - Identifier matching from `application.yml`; compiled once and reused.
+- Configurable text normalization removes noisy OCR/Tika whitespace before the response is built.
 - Concurrent processing via a configurable `ThreadPoolTaskExecutor`.
 - Central JSON error handling and Swagger UI.
 
@@ -99,6 +100,10 @@ document-extraction:
   max-file-size: 10MB
   max-request-size: 25MB
   supported-extensions: [pdf, doc, docx, txt, png, jpg, jpeg, tiff]
+  text-normalization:
+    enabled: true
+    collapse-whitespace: true
+    max-consecutive-line-breaks: 1
   ocr:
     enabled: true
     tesseract-path: tesseract
@@ -116,7 +121,7 @@ identifiers:
       regex: "\\bINV\\d{8}\\b"
 ```
 
-Regex definitions are validated and compiled during configuration binding; invalid expressions fail startup.
+Regex definitions are validated and compiled during configuration binding; invalid expressions fail startup. By default, extracted text is normalized into readable single-line content so JSON responses do not contain long runs of escaped `\n` characters. Set `document-extraction.text-normalization.collapse-whitespace=false` to preserve paragraph line breaks with a configurable maximum.
 
 ## Supported formats
 
