@@ -19,6 +19,13 @@ document-extraction:
     queue-capacity: 50
     thread-name-prefix: doc-extract-
   supported-extensions: [pdf, doc, docx, txt, rtf, html, htm, xml, csv, xls, xlsx, odt, jpg, jpeg, tiff, tif, bmp, svg, png, gif, avif]
+  ocr:
+    enabled: true
+    tesseract-path: tesseract
+    language: eng
+    page-segmentation-mode: 6
+    timeout: 30s
+    additional-arguments: []
   supported-mime-types:
     - application/pdf
     - application/msword

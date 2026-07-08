@@ -5,13 +5,15 @@ A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata fr
 ## Features
 
 - `POST /api/v1/documents/extract` multipart API for one or more `files` parts.
-- Apache Tika based extraction for PDF, DOC, DOCX, TXT, RTF, HTML, XML, CSV, XLS, XLSX, ODT and common image formats.
+- Apache Tika based extraction for PDF, DOC, DOCX, TXT, RTF, HTML, XML, CSV, XLS, XLSX and ODT.
+- Real raster image text extraction for JPG, JPEG, TIFF, BMP, PNG, GIF and AVIF through a local Tesseract OCR process.
+- SVG text extraction through Apache Tika/XML parsing.
 - SHA-256, MIME type, extension, size, timestamp, duration, character count, status and failure details per document.
 - Identifier matching from `application.yml`; compiled once and reused.
 - Concurrent processing via a configurable `ThreadPoolTaskExecutor`.
 - Central JSON error handling and Swagger UI.
 
-> Image support is limited to text and metadata that Apache Tika can extract without OCR. This project intentionally does not use OCR, AI services, databases, Docker, or cloud services.
+> Raster image text extraction uses a local Tesseract executable. No cloud OCR, AI service, database or Docker runtime is used by the application.
 
 ## Architecture
 
@@ -31,6 +33,8 @@ Packages follow a layered design:
 mvn clean install
 mvn spring-boot:run
 ```
+
+For raster image OCR, install Tesseract locally and make the executable available on `PATH`, or set `document-extraction.ocr.tesseract-path` to the executable location.
 
 Swagger UI is available at:
 
@@ -94,7 +98,13 @@ spring.servlet.multipart.max-request-size: 25MB
 document-extraction:
   max-file-size: 10MB
   max-request-size: 25MB
-  supported-extensions: [pdf, doc, docx, txt]
+  supported-extensions: [pdf, doc, docx, txt, png, jpg, jpeg, tiff]
+  ocr:
+    enabled: true
+    tesseract-path: tesseract
+    language: eng
+    page-segmentation-mode: 6
+    timeout: 30s
 ```
 
 Add identifier patterns without code changes:
@@ -110,7 +120,7 @@ Regex definitions are validated and compiled during configuration binding; inval
 
 ## Supported formats
 
-PDF, DOC, DOCX, TXT, RTF, HTML, XML, CSV, XLS, XLSX, ODT, JPG, JPEG, TIFF, BMP, SVG, PNG, GIF and AVIF.
+PDF, DOC, DOCX, TXT, RTF, HTML, XML, CSV, XLS, XLSX, ODT, JPG, JPEG, TIFF, BMP, SVG, PNG, GIF and AVIF. Raster image formats are passed to local Tesseract OCR after MIME/type validation.
 
 ## Error handling
 
@@ -120,4 +130,4 @@ Errors use a consistent JSON shape with `requestId`, timestamp, HTTP status, mes
 
 - Extraction runs locally and keeps uploaded file bytes in memory only for the duration of each request.
 - If extraction fails for one supported document, other documents continue and the failed item is returned with `status=FAILED`.
-- Images are parsed with Apache Tika only; embedded textual metadata may be extracted, but raster text requires OCR and is out of scope.
+- Raster image OCR requires a local Tesseract installation. If the configured executable is unavailable or OCR times out, only that document is marked `FAILED` and the remaining documents continue processing.
