@@ -50,7 +50,8 @@ public class ApacheTikaTextExtractor implements TextExtractionService {
 
     private String extractWithTika(byte[] content, String fileName) {
         Metadata metadata = new Metadata();
-        metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
+        // Use the string key so this code compiles regardless of which Tika constants are present.
+        metadata.set("resourceName", fileName);
 
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(content)) {
             BodyContentHandler handler = new BodyContentHandler(-1);
