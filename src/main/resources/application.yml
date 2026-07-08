@@ -1,0 +1,69 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: document-extractor-stub
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 25MB
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+document-extraction:
+  max-file-size: 10MB
+  max-request-size: 25MB
+  executor:
+    core-pool-size: 4
+    max-pool-size: 8
+    queue-capacity: 50
+    thread-name-prefix: doc-extract-
+  supported-extensions: [pdf, doc, docx, txt, rtf, html, htm, xml, csv, xls, xlsx, odt, jpg, jpeg, tiff, tif, bmp, svg, png, gif, avif]
+  text-normalization:
+    enabled: true
+    collapse-whitespace: true
+    max-consecutive-line-breaks: 1
+  ocr:
+    enabled: true
+    tesseract-path: tesseract
+    language: eng
+    page-segmentation-mode: 6
+    timeout: 30s
+    additional-arguments: []
+  supported-mime-types:
+    - application/pdf
+    - application/msword
+    - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    - text/plain
+    - application/rtf
+    - text/rtf
+    - text/html
+    - application/xhtml+xml
+    - application/xml
+    - text/xml
+    - text/csv
+    - application/vnd.ms-excel
+    - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    - application/vnd.oasis.opendocument.text
+    - image/jpeg
+    - image/tiff
+    - image/bmp
+    - image/svg+xml
+    - image/png
+    - image/gif
+    - image/avif
+identifiers:
+  definitions:
+    CUSTOMER_ID:
+      regex: "\\bCUST\\d{8}\\b"
+    POLICY_NUMBER:
+      regex: "\\bPOL\\d{10}\\b"
+    CLAIM_ID:
+      regex: "\\bCLM\\d{7}\\b"
+    EMAIL:
+      regex: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+    PHONE:
+      regex: "\\+?[0-9]{10,15}"
+logging:
+  level:
+    com.gittexplorer.documentextractor: INFO
