@@ -1,6 +1,6 @@
 # Document Extractor Stub
 
-A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata from local document uploads with Apache Tika, performs local OCR for raster image text extraction through Tesseract, then applies configurable identifier regular expressions.
+A standalone Spring Boot 3 / Java 17 REST API that extracts text and metadata from local document uploads with Apache Tika, then applies configurable identifier regular expressions.
 
 ## Features
 
